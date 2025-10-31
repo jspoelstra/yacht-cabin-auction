@@ -46,7 +46,8 @@ function App() {
       outsidePrice,
       insidePrice,
       status: 'active',
-      lowestOutsideBid
+      lowestOutsideBid,
+      adminPassword: 'Spoelstra'
     }
 
     setAuctionState(newState)
@@ -112,6 +113,19 @@ function App() {
     toast.success('Auction restarted with new random assignments')
   }
 
+  const handleAdminLogin = (password: string) => {
+    if (!auctionState) {
+      setIsAdmin(true)
+      return
+    }
+
+    if (password === auctionState.adminPassword) {
+      setIsAdmin(true)
+    } else {
+      toast.error('Incorrect admin password')
+    }
+  }
+
   const handleUpdateSettings = (newConfig: AuctionConfig) => {
     if (!auctionState) return
 
@@ -132,6 +146,34 @@ function App() {
     toast.success('Settings updated - prices recalculated')
   }
 
+  const handleUpdateParticipants = (updatedParticipants: Participant[]) => {
+    if (!auctionState) return
+
+    setAuctionState((current) => {
+      if (!current) return null
+      return {
+        ...current,
+        participants: updatedParticipants
+      }
+    })
+
+    toast.success('Participant information updated')
+  }
+
+  const handleUpdateAdminPassword = (newPassword: string) => {
+    if (!auctionState) return
+
+    setAuctionState((current) => {
+      if (!current) return null
+      return {
+        ...current,
+        adminPassword: newPassword
+      }
+    })
+
+    toast.success('Admin password updated')
+  }
+
   if (!auctionState || auctionState.status === 'setup') {
     if (isAdmin) {
       return (
@@ -145,7 +187,7 @@ function App() {
     return (
       <div className="min-h-screen bg-background">
         <Toaster position="top-center" richColors />
-        <ParticipantLogin onAdminLogin={() => setIsAdmin(true)} />
+        <ParticipantLogin onAdminLogin={handleAdminLogin} />
       </div>
     )
   }
@@ -159,6 +201,8 @@ function App() {
           onRestart={handleRestartAuction}
           onLogout={() => setIsAdmin(false)}
           onUpdateSettings={handleUpdateSettings}
+          onUpdateParticipants={handleUpdateParticipants}
+          onUpdateAdminPassword={handleUpdateAdminPassword}
         />
       </div>
     )
@@ -171,7 +215,8 @@ function App() {
         <ParticipantLogin 
           participants={auctionState.participants}
           onLogin={setCurrentParticipantId}
-          onAdminLogin={() => setIsAdmin(true)}
+          onAdminLogin={handleAdminLogin}
+          adminPassword={auctionState.adminPassword}
         />
       </div>
     )

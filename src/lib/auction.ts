@@ -44,6 +44,8 @@ export function initializeParticipants(config: AuctionConfig): Participant[] {
   return names.map((name, index) => ({
     id: `participant-${index}`,
     name,
+    phone: '',
+    password: '',
     bid: shuffledCabins[index] === 'outside' ? outsidePrice : insidePrice,
     bidTimestamp: Date.now(),
     cabinType: shuffledCabins[index],

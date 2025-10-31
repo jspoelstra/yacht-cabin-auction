@@ -3,6 +3,8 @@ export type CabinType = 'outside' | 'inside'
 export interface Participant {
   id: string
   name: string
+  phone: string
+  password: string
   bid: number
   bidTimestamp: number
   cabinType: CabinType
@@ -22,6 +24,7 @@ export interface AuctionState {
   insidePrice: number
   status: 'setup' | 'active' | 'closed'
   lowestOutsideBid: number
+  adminPassword: string
 }
 
 export interface BidSubmission {
