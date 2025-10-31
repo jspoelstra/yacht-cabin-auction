@@ -31,7 +31,7 @@ export function ParticipantDashboard({
   }, [])
 
   const handleSubmit = () => {
-    const amount = parseFloat(bidAmount)
+    const amount = Math.round(parseFloat(bidAmount))
     if (amount > 0 && !isNaN(amount)) {
       onSubmitBid(participant.id, amount)
     }
@@ -181,8 +181,9 @@ export function ParticipantDashboard({
                 disabled={isClosed || participant.isLocked}
                 placeholder="Enter amount"
                 min="0"
-                step="100"
+                step="1"
               />
+              <p className="text-xs text-muted-foreground">Integer dollar amounts only</p>
             </div>
 
             <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">

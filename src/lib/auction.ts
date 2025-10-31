@@ -25,8 +25,8 @@ export function calculateInitialPrices(config: AuctionConfig): {
   insidePrice: number
 } {
   const { totalCost, minimumSpread } = config
-  const outsidePrice = (totalCost + 2 * minimumSpread) / 6
-  const insidePrice = outsidePrice - minimumSpread
+  const outsidePrice = Math.round((totalCost + 2 * minimumSpread) / 6)
+  const insidePrice = Math.round(outsidePrice - minimumSpread)
   
   return { outsidePrice, insidePrice }
 }
@@ -63,11 +63,12 @@ export function processBid(
   lowestOutsideBid: number
 } {
   const now = Date.now()
+  const roundedBidAmount = Math.round(bidAmount)
   
   const updatedParticipants = participants.map(p => ({
     ...p,
     isLocked: p.id === participantId ? true : false,
-    bid: p.id === participantId ? bidAmount : p.bid,
+    bid: p.id === participantId ? roundedBidAmount : p.bid,
     bidTimestamp: p.id === participantId ? now : p.bidTimestamp
   }))
   
@@ -80,9 +81,9 @@ export function processBid(
   const insideHolders = sorted.slice(4, 6)
   
   const lowestOutsideBid = Math.min(...outsideHolders.map(p => p.bid))
-  const oFloor = (config.totalCost + 2 * config.minimumSpread) / 6
+  const oFloor = Math.round((config.totalCost + 2 * config.minimumSpread) / 6)
   const outsidePrice = Math.max(lowestOutsideBid, oFloor)
-  const insidePrice = (config.totalCost - 4 * outsidePrice) / 2
+  const insidePrice = Math.round((config.totalCost - 4 * outsidePrice) / 2)
   
   const finalParticipants = updatedParticipants.map(p => ({
     ...p,
@@ -109,15 +110,16 @@ export function shouldExtendAuction(closeTime: number, bidTimestamp: number): nu
 }
 
 export function formatCurrency(amount: number): string {
-  const absAmount = Math.abs(amount)
+  const roundedAmount = Math.round(amount)
+  const absAmount = Math.abs(roundedAmount)
   const formatted = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   }).format(absAmount)
   
-  return amount < 0 ? `-${formatted}` : formatted
+  return roundedAmount < 0 ? `-${formatted}` : formatted
 }
 
 export function formatTimeRemaining(closeTime: number, now: number): string {
@@ -150,9 +152,9 @@ export function recalculatePrices(
   const outsideHolders = sorted.slice(0, 4)
   
   const lowestOutsideBid = Math.min(...outsideHolders.map(p => p.bid))
-  const oFloor = (config.totalCost + 2 * config.minimumSpread) / 6
+  const oFloor = Math.round((config.totalCost + 2 * config.minimumSpread) / 6)
   const outsidePrice = Math.max(lowestOutsideBid, oFloor)
-  const insidePrice = (config.totalCost - 4 * outsidePrice) / 2
+  const insidePrice = Math.round((config.totalCost - 4 * outsidePrice) / 2)
   
   return {
     outsidePrice,

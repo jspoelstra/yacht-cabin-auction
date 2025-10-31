@@ -18,8 +18,8 @@ export function AdminSetup({ onStart, onBack }: AdminSetupProps) {
 
   const handleStart = () => {
     const config: AuctionConfig = {
-      totalCost: parseFloat(totalCost),
-      minimumSpread: parseFloat(minimumSpread),
+      totalCost: Math.round(parseFloat(totalCost)),
+      minimumSpread: Math.round(parseFloat(minimumSpread)),
       closeTime: Date.now() + parseFloat(durationHours) * 60 * 60 * 1000
     }
     onStart(config)
@@ -60,10 +60,10 @@ export function AdminSetup({ onStart, onBack }: AdminSetupProps) {
                 onChange={(e) => setTotalCost(e.target.value)}
                 placeholder="24000"
                 min="0"
-                step="100"
+                step="1"
               />
               <p className="text-xs text-muted-foreground">
-                Fixed total cost to be divided among 6 cabins
+                Fixed total cost to be divided among 6 cabins (integer dollars)
               </p>
             </div>
 
@@ -75,10 +75,10 @@ export function AdminSetup({ onStart, onBack }: AdminSetupProps) {
                 value={minimumSpread}
                 onChange={(e) => setMinimumSpread(e.target.value)}
                 placeholder="1000"
-                step="100"
+                step="1"
               />
               <p className="text-xs text-muted-foreground">
-                Minimum difference between outside and inside cabin prices (can be negative)
+                Minimum difference between outside and inside cabin prices (integer dollars, can be negative)
               </p>
             </div>
 

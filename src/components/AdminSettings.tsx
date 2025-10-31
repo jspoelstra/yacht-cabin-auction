@@ -27,8 +27,8 @@ export function AdminSettings({ config, onUpdateSettings }: AdminSettingsProps) 
   const [minutesUntilClose, setMinutesUntilClose] = useState('')
 
   const handleSave = () => {
-    const parsedTotalCost = parseFloat(totalCost)
-    const parsedMinSpread = parseFloat(minimumSpread)
+    const parsedTotalCost = Math.round(parseFloat(totalCost))
+    const parsedMinSpread = Math.round(parseFloat(minimumSpread))
     const parsedMinutes = minutesUntilClose ? parseFloat(minutesUntilClose) : null
 
     if (isNaN(parsedTotalCost) || parsedTotalCost <= 0) {
@@ -91,13 +91,13 @@ export function AdminSettings({ config, onUpdateSettings }: AdminSettingsProps) 
             <Input
               id="total-cost"
               type="number"
-              step="0.01"
+              step="1"
               value={totalCost}
               onChange={(e) => setTotalCost(e.target.value)}
               placeholder="Enter total cost"
             />
             <p className="text-xs text-muted-foreground">
-              The total cost to be divided among all 6 cabins
+              The total cost to be divided among all 6 cabins (integer dollars)
             </p>
           </div>
           <div className="grid gap-2">
@@ -105,13 +105,13 @@ export function AdminSettings({ config, onUpdateSettings }: AdminSettingsProps) 
             <Input
               id="min-spread"
               type="number"
-              step="0.01"
+              step="1"
               value={minimumSpread}
               onChange={(e) => setMinimumSpread(e.target.value)}
               placeholder="Enter minimum spread"
             />
             <p className="text-xs text-muted-foreground">
-              Minimum price difference between outside and inside cabins
+              Minimum price difference between outside and inside cabins (integer dollars)
             </p>
           </div>
           <div className="grid gap-2">
