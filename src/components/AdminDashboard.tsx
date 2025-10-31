@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import type { AuctionState } from '@/lib/types'
+import type { AuctionState, AuctionConfig } from '@/lib/types'
 import { formatCurrency, formatTimeRemaining } from '@/lib/auction'
 import { SignOut, ArrowsClockwise, Users, Clock } from '@phosphor-icons/react'
 import {
@@ -13,14 +13,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { AdminSettings } from './AdminSettings'
 
 interface AdminDashboardProps {
   auctionState: AuctionState
   onRestart: () => void
   onLogout: () => void
+  onUpdateSettings: (config: AuctionConfig) => void
 }
 
-export function AdminDashboard({ auctionState, onRestart, onLogout }: AdminDashboardProps) {
+export function AdminDashboard({ auctionState, onRestart, onLogout, onUpdateSettings }: AdminDashboardProps) {
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
@@ -42,6 +44,10 @@ export function AdminDashboard({ auctionState, onRestart, onLogout }: AdminDashb
             <p className="text-muted-foreground">Monitor and manage the auction</p>
           </div>
           <div className="flex gap-2">
+            <AdminSettings 
+              config={auctionState.config} 
+              onUpdateSettings={onUpdateSettings}
+            />
             <Button variant="outline" onClick={onRestart}>
               <ArrowsClockwise className="mr-2" size={16} />
               Restart Auction

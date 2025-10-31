@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import type { AuctionState, AuctionConfig, Participant } from './lib/types'
-import { initializeParticipants, calculateInitialPrices, processBid, shouldExtendAuction } from './lib/auction'
+import { initializeParticipants, calculateInitialPrices, processBid, shouldExtendAuction, recalculatePrices } from './lib/auction'
 import { AdminSetup } from './components/AdminSetup'
 import { AdminDashboard } from './components/AdminDashboard'
 import { ParticipantLogin } from './components/ParticipantLogin'
@@ -112,6 +112,26 @@ function App() {
     toast.success('Auction restarted with new random assignments')
   }
 
+  const handleUpdateSettings = (newConfig: AuctionConfig) => {
+    if (!auctionState) return
+
+    setAuctionState((current) => {
+      if (!current) return null
+
+      const prices = recalculatePrices(current.participants, newConfig)
+
+      return {
+        ...current,
+        config: newConfig,
+        outsidePrice: prices.outsidePrice,
+        insidePrice: prices.insidePrice,
+        lowestOutsideBid: prices.lowestOutsideBid
+      }
+    })
+
+    toast.success('Settings updated - prices recalculated')
+  }
+
   if (!auctionState || auctionState.status === 'setup') {
     if (isAdmin) {
       return (
@@ -138,6 +158,7 @@ function App() {
           auctionState={auctionState} 
           onRestart={handleRestartAuction}
           onLogout={() => setIsAdmin(false)}
+          onUpdateSettings={handleUpdateSettings}
         />
       </div>
     )

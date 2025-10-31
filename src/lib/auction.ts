@@ -133,3 +133,30 @@ export function formatTimeRemaining(closeTime: number, now: number): string {
   
   return `${minutes}m ${seconds}s`
 }
+
+export function recalculatePrices(
+  participants: Participant[],
+  config: AuctionConfig
+): {
+  outsidePrice: number
+  insidePrice: number
+  lowestOutsideBid: number
+} {
+  const sorted = [...participants].sort((a, b) => {
+    if (b.bid !== a.bid) return b.bid - a.bid
+    return a.bidTimestamp - b.bidTimestamp
+  })
+  
+  const outsideHolders = sorted.slice(0, 4)
+  
+  const lowestOutsideBid = Math.min(...outsideHolders.map(p => p.bid))
+  const oFloor = (config.totalCost + 2 * config.minimumSpread) / 6
+  const outsidePrice = Math.max(lowestOutsideBid, oFloor)
+  const insidePrice = (config.totalCost - 4 * outsidePrice) / 2
+  
+  return {
+    outsidePrice,
+    insidePrice,
+    lowestOutsideBid
+  }
+}
