@@ -53,6 +53,29 @@ function App() {
     return () => clearInterval(interval)
   }, [auctionState, lastBidTimestamp, setAuctionState])
 
+  const handleStartBidding = () => {
+    if (!auctionState) return
+    
+    setAuctionState((current) => {
+      if (!current) return null
+      
+      const unlockedParticipants = current.participants.map(p => ({
+        ...p,
+        isLocked: false
+      }))
+      
+      return {
+        ...current,
+        status: 'active',
+        isAuctionLocked: false,
+        participants: unlockedParticipants
+      }
+    })
+    
+    setLastBidTimestamp(Date.now())
+    toast.success('Bidding has started!')
+  }
+
   useEffect(() => {
     if (!auctionState || !currentParticipantId) return
     
@@ -82,7 +105,7 @@ function App() {
       participants,
       outsidePrice,
       insidePrice,
-      status: 'active',
+      status: 'waiting',
       lowestOutsideBid,
       adminPassword: 'Spoelstra',
       isAuctionLocked: true
@@ -90,7 +113,7 @@ function App() {
 
     setAuctionState(newState)
     setLastBidTimestamp(Date.now())
-    toast.success('Auction started!')
+    toast.success('Auction created - ready to start bidding')
   }
 
   const handleSubmitBid = (participantId: string, amount: number) => {
@@ -166,7 +189,7 @@ function App() {
         : 0,
       bidTimestamp: Date.now(),
       cabinType: index < shuffledCabins.length ? shuffledCabins[index] : 'none' as const,
-      isLocked: false
+      isLocked: true
     }))
 
     const outsideHolders = resetParticipants.filter(p => p.cabinType === 'outside')
@@ -182,7 +205,7 @@ function App() {
         outsidePrice,
         insidePrice,
         lowestOutsideBid,
-        status: 'active',
+        status: 'waiting',
         isAuctionLocked: true,
         config: {
           ...current.config,
@@ -192,7 +215,7 @@ function App() {
     })
     
     setLastBidTimestamp(Date.now())
-    toast.success('Auction reset - new random cabin assignments created')
+    toast.success('Auction reset - waiting for admin to start bidding')
   }
 
   const handleClearAuction = () => {
@@ -336,6 +359,7 @@ function App() {
           onUpdateSettings={handleUpdateSettings}
           onUpdateParticipants={handleUpdateParticipants}
           onUpdateAdminPassword={handleUpdateAdminPassword}
+          onStartBidding={handleStartBidding}
         />
       </div>
     )

@@ -52,7 +52,7 @@ export function initializeParticipants(config: AuctionConfig): Participant[] {
     bid: shuffledCabins[index] === 'outside' ? outsidePrice : insidePrice,
     bidTimestamp: Date.now(),
     cabinType: shuffledCabins[index],
-    isLocked: false
+    isLocked: true
   }))
 }
 

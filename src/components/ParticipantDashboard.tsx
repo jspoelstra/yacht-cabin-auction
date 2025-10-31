@@ -51,9 +51,10 @@ export function ParticipantDashboard({
   }
 
   const isClosed = auctionState.status === 'closed'
+  const isWaiting = auctionState.status === 'waiting'
   const isAuctionLocked = auctionState.isAuctionLocked
   const isUserLocked = participant.isLocked
-  const isDisabled = isClosed || isAuctionLocked || isUserLocked
+  const isDisabled = isClosed || isAuctionLocked || isUserLocked || isWaiting
   const myPrice = participant.cabinType === 'outside' 
     ? auctionState.outsidePrice 
     : participant.cabinType === 'inside'
@@ -91,7 +92,15 @@ export function ParticipantDashboard({
           </Alert>
         )}
 
-        {!isClosed && isAtRisk && (
+        {isWaiting && (
+          <Alert className="border-primary bg-primary/5">
+            <AlertDescription className="text-center font-semibold">
+              ⏳ AUCTION HAS NOT STARTED YET - Waiting for admin to begin bidding
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {!isClosed && !isWaiting && isAtRisk && (
           <Alert variant="destructive">
             <AlertDescription>
               ⚠️ You are at risk! Your bid is the lowest among outside cabin holders. Higher bids may bump you to an inside cabin.
@@ -99,7 +108,7 @@ export function ParticipantDashboard({
           </Alert>
         )}
 
-        {!isClosed && isAuctionLocked && (
+        {!isClosed && !isWaiting && isAuctionLocked && (
           <Alert className="border-primary bg-primary/5">
             <AlertDescription className="text-center font-semibold">
               🔒 Auction is locked - waiting for admin to start bidding
@@ -107,7 +116,7 @@ export function ParticipantDashboard({
           </Alert>
         )}
 
-        {!isClosed && notificationPermission !== 'granted' && (
+        {!isClosed && !isWaiting && notificationPermission !== 'granted' && (
           <Alert className="border-accent bg-accent/5">
             <AlertDescription className="flex items-center justify-between">
               <span>🔔 Enable browser notifications to get instant alerts when prices change</span>
@@ -163,13 +172,18 @@ export function ParticipantDashboard({
                 <Clock size={32} weight="duotone" />
                 {isClosed 
                   ? 'Closed' 
+                  : isWaiting
+                  ? 'Not Started'
                   : formatTimeRemaining(auctionState.config.closeTime, now)
                 }
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Auction extends by 10 minutes with each new bid
+                {isWaiting 
+                  ? 'Waiting for admin to start the auction'
+                  : 'Auction extends by 10 minutes with each new bid'
+                }
               </p>
             </CardContent>
           </Card>
@@ -218,6 +232,8 @@ export function ParticipantDashboard({
             <CardDescription>
               {isClosed 
                 ? 'Auction has closed'
+                : isWaiting
+                ? 'Auction has not started yet'
                 : isAuctionLocked
                 ? 'Auction is locked - waiting for admin to start bidding'
                 : isUserLocked 
@@ -243,7 +259,12 @@ export function ParticipantDashboard({
             </div>
 
             <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
-              {isAuctionLocked ? (
+              {isWaiting ? (
+                <>
+                  <Clock size={20} className="text-muted-foreground" />
+                  <span className="text-sm font-medium">Waiting for auction to start</span>
+                </>
+              ) : isAuctionLocked ? (
                 <>
                   <Lock size={20} className="text-primary" />
                   <span className="text-sm font-medium">Auction locked by admin</span>

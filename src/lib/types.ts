@@ -24,7 +24,7 @@ export interface AuctionState {
   participants: Participant[]
   outsidePrice: number
   insidePrice: number
-  status: 'setup' | 'active' | 'closed'
+  status: 'setup' | 'waiting' | 'active' | 'closed'
   lowestOutsideBid: number
   adminPassword: string
   isAuctionLocked: boolean

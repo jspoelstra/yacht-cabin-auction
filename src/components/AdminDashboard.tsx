@@ -38,9 +38,10 @@ interface AdminDashboardProps {
   onUpdateSettings: (config: AuctionConfig) => void
   onUpdateParticipants: (participants: Participant[]) => void
   onUpdateAdminPassword: (newPassword: string) => void
+  onStartBidding: () => void
 }
 
-export function AdminDashboard({ auctionState, onToggleLock, onReset, onClear, onLogout, onUpdateSettings, onUpdateParticipants, onUpdateAdminPassword }: AdminDashboardProps) {
+export function AdminDashboard({ auctionState, onToggleLock, onReset, onClear, onLogout, onUpdateSettings, onUpdateParticipants, onUpdateAdminPassword, onStartBidding }: AdminDashboardProps) {
   const [now, setNow] = useState(Date.now())
   const [editingParticipant, setEditingParticipant] = useState<Participant | null>(null)
   const [editForm, setEditForm] = useState({ name: '', phone: '', password: '' })
@@ -187,22 +188,32 @@ export function AdminDashboard({ auctionState, onToggleLock, onReset, onClear, o
               config={auctionState.config} 
               onUpdateSettings={onUpdateSettings}
             />
-            <Button 
-              variant={auctionState.isAuctionLocked ? "default" : "outline"}
-              onClick={onToggleLock}
-            >
-              {auctionState.isAuctionLocked ? (
-                <>
-                  <Play className="mr-2" size={16} />
-                  Start Bidding
-                </>
-              ) : (
-                <>
-                  <Pause className="mr-2" size={16} />
-                  Lock Bidding
-                </>
-              )}
-            </Button>
+            {auctionState.status === 'waiting' ? (
+              <Button 
+                variant="default"
+                onClick={onStartBidding}
+              >
+                <Play className="mr-2" size={16} />
+                Start Bidding
+              </Button>
+            ) : (
+              <Button 
+                variant={auctionState.isAuctionLocked ? "default" : "outline"}
+                onClick={onToggleLock}
+              >
+                {auctionState.isAuctionLocked ? (
+                  <>
+                    <LockOpen className="mr-2" size={16} />
+                    Unlock Bidding
+                  </>
+                ) : (
+                  <>
+                    <Pause className="mr-2" size={16} />
+                    Lock Bidding
+                  </>
+                )}
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setShowResetConfirm(true)}>
               <ArrowsClockwise className="mr-2" size={16} />
               Reset Auction
@@ -224,8 +235,12 @@ export function AdminDashboard({ auctionState, onToggleLock, onReset, onClear, o
               <CardDescription>Auction Status</CardDescription>
             </CardHeader>
             <CardContent>
-              <Badge variant={auctionState.status === 'active' ? 'default' : 'secondary'} className="text-sm">
-                {auctionState.status.toUpperCase()}
+              <Badge variant={
+                auctionState.status === 'active' ? 'default' : 
+                auctionState.status === 'waiting' ? 'secondary' : 
+                'outline'
+              } className="text-sm">
+                {auctionState.status === 'waiting' ? 'WAIT' : auctionState.status.toUpperCase()}
               </Badge>
             </CardContent>
           </Card>
@@ -251,6 +266,8 @@ export function AdminDashboard({ auctionState, onToggleLock, onReset, onClear, o
                 <span className="text-lg font-semibold">
                   {auctionState.status === 'active' 
                     ? formatTimeRemaining(auctionState.config.closeTime, now)
+                    : auctionState.status === 'waiting'
+                    ? 'Not Started'
                     : 'Closed'
                   }
                 </span>
