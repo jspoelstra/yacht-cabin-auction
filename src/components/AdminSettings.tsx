@@ -82,7 +82,10 @@ export function AdminSettings({ config, onUpdateSettings }: AdminSettingsProps) 
     if (newOpen) {
       setTotalCost(config.totalCost.toString())
       setMinimumSpread(config.minimumSpread.toString())
-      setMinutesUntilClose('')
+      
+      const minutesRemaining = Math.ceil((config.closeTime - Date.now()) / (60 * 1000))
+      setMinutesUntilClose(minutesRemaining > 0 ? minutesRemaining.toString() : '')
+      
       setOutsideCabins((config.outsideCabins ?? 4).toString())
       setInsideCabins((config.insideCabins ?? 2).toString())
     }
