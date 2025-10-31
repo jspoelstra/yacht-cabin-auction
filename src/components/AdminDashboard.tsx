@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import type { AuctionState, AuctionConfig, Participant } from '@/lib/types'
 import { formatCurrency, formatTimeRemaining } from '@/lib/auction'
-import { SignOut, ArrowsClockwise, Users, Clock, PencilSimple, Key, Trash, Plus } from '@phosphor-icons/react'
+import { SignOut, ArrowsClockwise, Users, Clock, PencilSimple, Key, Trash, Plus, Play, Pause, LockOpen, Eraser } from '@phosphor-icons/react'
 import {
   Table,
   TableBody,
@@ -31,14 +31,16 @@ import {
 
 interface AdminDashboardProps {
   auctionState: AuctionState
-  onRestart: () => void
+  onToggleLock: () => void
+  onReset: () => void
+  onClear: () => void
   onLogout: () => void
   onUpdateSettings: (config: AuctionConfig) => void
   onUpdateParticipants: (participants: Participant[]) => void
   onUpdateAdminPassword: (newPassword: string) => void
 }
 
-export function AdminDashboard({ auctionState, onRestart, onLogout, onUpdateSettings, onUpdateParticipants, onUpdateAdminPassword }: AdminDashboardProps) {
+export function AdminDashboard({ auctionState, onToggleLock, onReset, onClear, onLogout, onUpdateSettings, onUpdateParticipants, onUpdateAdminPassword }: AdminDashboardProps) {
   const [now, setNow] = useState(Date.now())
   const [editingParticipant, setEditingParticipant] = useState<Participant | null>(null)
   const [editForm, setEditForm] = useState({ name: '', phone: '', password: '' })
@@ -48,6 +50,8 @@ export function AdminDashboard({ auctionState, onRestart, onLogout, onUpdateSett
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [addForm, setAddForm] = useState({ name: '', phone: '', password: '' })
   const [deleteParticipantId, setDeleteParticipantId] = useState<string | null>(null)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000)
@@ -183,9 +187,29 @@ export function AdminDashboard({ auctionState, onRestart, onLogout, onUpdateSett
               config={auctionState.config} 
               onUpdateSettings={onUpdateSettings}
             />
-            <Button variant="outline" onClick={onRestart}>
+            <Button 
+              variant={auctionState.isAuctionLocked ? "default" : "outline"}
+              onClick={onToggleLock}
+            >
+              {auctionState.isAuctionLocked ? (
+                <>
+                  <Play className="mr-2" size={16} />
+                  Start Bidding
+                </>
+              ) : (
+                <>
+                  <Pause className="mr-2" size={16} />
+                  Lock Bidding
+                </>
+              )}
+            </Button>
+            <Button variant="outline" onClick={() => setShowResetConfirm(true)}>
               <ArrowsClockwise className="mr-2" size={16} />
-              Restart Auction
+              Reset Auction
+            </Button>
+            <Button variant="outline" onClick={() => setShowClearConfirm(true)}>
+              <Eraser className="mr-2" size={16} />
+              Clear All
             </Button>
             <Button variant="ghost" onClick={onLogout}>
               <SignOut className="mr-2" size={16} />
@@ -202,6 +226,17 @@ export function AdminDashboard({ auctionState, onRestart, onLogout, onUpdateSett
             <CardContent>
               <Badge variant={auctionState.status === 'active' ? 'default' : 'secondary'} className="text-sm">
                 {auctionState.status.toUpperCase()}
+              </Badge>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Bidding Status</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Badge variant={auctionState.isAuctionLocked ? 'outline' : 'default'} className="text-sm">
+                {auctionState.isAuctionLocked ? '🔒 LOCKED' : '🔓 UNLOCKED'}
               </Badge>
             </CardContent>
           </Card>
@@ -229,15 +264,6 @@ export function AdminDashboard({ auctionState, onRestart, onLogout, onUpdateSett
             </CardHeader>
             <CardContent>
               <p className="text-lg font-semibold">{formatCurrency(auctionState.config.totalCost)}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardDescription>Min Spread</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-lg font-semibold">{formatCurrency(auctionState.config.minimumSpread)}</p>
             </CardContent>
           </Card>
         </div>
@@ -490,6 +516,40 @@ export function AdminDashboard({ auctionState, onRestart, onLogout, onUpdateSett
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                 Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Reset Auction</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will reset all bids and create new random cabin assignments, but will keep participant information. Prices will return to defaults. Are you sure?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => { onReset(); setShowResetConfirm(false); }}>
+                Reset Auction
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Clear All Data</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will completely clear the auction and all participant data, returning to initial setup. This action cannot be undone. Are you sure?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => { onClear(); setShowClearConfirm(false); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Clear All Data
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

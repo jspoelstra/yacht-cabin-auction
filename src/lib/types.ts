@@ -27,6 +27,7 @@ export interface AuctionState {
   status: 'setup' | 'active' | 'closed'
   lowestOutsideBid: number
   adminPassword: string
+  isAuctionLocked: boolean
 }
 
 export interface BidSubmission {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import type { AuctionState, AuctionConfig, Participant } from './lib/types'
-import { initializeParticipants, calculateInitialPrices, processBid, shouldExtendAuction, recalculatePrices, generateParticipantNames } from './lib/auction'
+import { initializeParticipants, calculateInitialPrices, processBid, shouldExtendAuction, recalculatePrices, generateParticipantNames, shuffleArray } from './lib/auction'
 import { AdminSetup } from './components/AdminSetup'
 import { AdminDashboard } from './components/AdminDashboard'
 import { ParticipantLogin } from './components/ParticipantLogin'
@@ -84,7 +84,8 @@ function App() {
       insidePrice,
       status: 'active',
       lowestOutsideBid,
-      adminPassword: 'Spoelstra'
+      adminPassword: 'Spoelstra',
+      isAuctionLocked: true
     }
 
     setAuctionState(newState)
@@ -94,6 +95,11 @@ function App() {
 
   const handleSubmitBid = (participantId: string, amount: number) => {
     if (!auctionState || auctionState.status !== 'active') return
+
+    if (auctionState.isAuctionLocked) {
+      toast.error('Auction is locked - admin needs to start bidding')
+      return
+    }
 
     const participant = auctionState.participants.find(p => p.id === participantId)
     if (!participant) return
@@ -126,28 +132,67 @@ function App() {
     toast.info('Bid submitted - prices updated')
   }
 
-  const handleRestartAuction = () => {
+  const handleToggleLock = () => {
     if (!auctionState) return
     
-    const participants = initializeParticipants(auctionState.config)
+    setAuctionState((current) => {
+      if (!current) return null
+      return {
+        ...current,
+        isAuctionLocked: !current.isAuctionLocked
+      }
+    })
+    
+    toast.success(auctionState.isAuctionLocked ? 'Auction unlocked - participants can bid' : 'Auction locked - participants cannot bid')
+  }
+
+  const handleResetAuction = () => {
+    if (!auctionState) return
+    
     const { outsidePrice, insidePrice } = calculateInitialPrices(auctionState.config)
-    const outsideHolders = participants.filter(p => p.cabinType === 'outside')
-    const lowestOutsideBid = Math.min(...outsideHolders.map(p => p.bid))
+    const { outsideCabins, insideCabins } = auctionState.config
+    
+    const cabinAssignments: ('outside' | 'inside')[] = [
+      ...Array(outsideCabins).fill('outside'),
+      ...Array(insideCabins).fill('inside')
+    ]
+    
+    const shuffledCabins = shuffleArray(cabinAssignments)
+    
+    const resetParticipants = auctionState.participants.map((p, index) => ({
+      ...p,
+      bid: index < shuffledCabins.length 
+        ? (shuffledCabins[index] === 'outside' ? outsidePrice : insidePrice)
+        : 0,
+      bidTimestamp: Date.now(),
+      cabinType: index < shuffledCabins.length ? shuffledCabins[index] : 'none' as const,
+      isLocked: false
+    }))
+
+    const outsideHolders = resetParticipants.filter(p => p.cabinType === 'outside')
+    const lowestOutsideBid = outsideHolders.length > 0 ? Math.min(...outsideHolders.map(p => p.bid)) : outsidePrice
 
     setAuctionState((current) => {
       if (!current) return null
       return {
         ...current,
-        participants,
+        participants: resetParticipants,
         outsidePrice,
         insidePrice,
-        status: 'active' as const,
-        lowestOutsideBid
+        lowestOutsideBid,
+        isAuctionLocked: true
       }
     })
     
     setLastBidTimestamp(Date.now())
-    toast.success('Auction restarted with new random assignments')
+    toast.success('Auction reset - new random cabin assignments created')
+  }
+
+  const handleClearAuction = () => {
+    setAuctionState(null)
+    setCurrentParticipantId(null)
+    setIsAdmin(false)
+    toast.success('Auction cleared - all data removed')
   }
 
   const handleAdminLogin = (password: string) => {
@@ -277,7 +322,9 @@ function App() {
         <Toaster position="top-center" richColors />
         <AdminDashboard 
           auctionState={auctionState} 
-          onRestart={handleRestartAuction}
+          onToggleLock={handleToggleLock}
+          onReset={handleResetAuction}
+          onClear={handleClearAuction}
           onLogout={() => setIsAdmin(false)}
           onUpdateSettings={handleUpdateSettings}
           onUpdateParticipants={handleUpdateParticipants}

@@ -51,6 +51,9 @@ export function ParticipantDashboard({
   }
 
   const isClosed = auctionState.status === 'closed'
+  const isAuctionLocked = auctionState.isAuctionLocked
+  const isUserLocked = participant.isLocked
+  const isDisabled = isClosed || isAuctionLocked || isUserLocked
   const myPrice = participant.cabinType === 'outside' 
     ? auctionState.outsidePrice 
     : participant.cabinType === 'inside'
@@ -92,6 +95,14 @@ export function ParticipantDashboard({
           <Alert variant="destructive">
             <AlertDescription>
               ⚠️ You are at risk! Your bid is the lowest among outside cabin holders. Higher bids may bump you to an inside cabin.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {!isClosed && isAuctionLocked && (
+          <Alert className="border-primary bg-primary/5">
+            <AlertDescription className="text-center font-semibold">
+              🔒 Auction is locked - waiting for admin to start bidding
             </AlertDescription>
           </Alert>
         )}
@@ -205,7 +216,11 @@ export function ParticipantDashboard({
           <CardHeader>
             <CardTitle>Submit Your Bid</CardTitle>
             <CardDescription>
-              {participant.isLocked 
+              {isClosed 
+                ? 'Auction has closed'
+                : isAuctionLocked
+                ? 'Auction is locked - waiting for admin to start bidding'
+                : isUserLocked 
                 ? 'You are locked until another participant bids' 
                 : 'Enter your maximum willingness to pay'
               }
@@ -219,7 +234,7 @@ export function ParticipantDashboard({
                 type="number"
                 value={bidAmount}
                 onChange={(e) => setBidAmount(e.target.value)}
-                disabled={isClosed || participant.isLocked}
+                disabled={isDisabled}
                 placeholder="Enter amount"
                 min="0"
                 step="1"
@@ -228,7 +243,12 @@ export function ParticipantDashboard({
             </div>
 
             <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
-              {participant.isLocked ? (
+              {isAuctionLocked ? (
+                <>
+                  <Lock size={20} className="text-primary" />
+                  <span className="text-sm font-medium">Auction locked by admin</span>
+                </>
+              ) : isUserLocked ? (
                 <>
                   <Lock size={20} className="text-destructive" />
                   <span className="text-sm font-medium">Bid locked - waiting for other participants</span>
@@ -245,7 +265,7 @@ export function ParticipantDashboard({
               className="w-full" 
               size="lg"
               onClick={handleSubmit}
-              disabled={isClosed || participant.isLocked || parseFloat(bidAmount) <= 0 || isNaN(parseFloat(bidAmount))}
+              disabled={isDisabled || parseFloat(bidAmount) <= 0 || isNaN(parseFloat(bidAmount))}
             >
               Submit Bid
             </Button>
