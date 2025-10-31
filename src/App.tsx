@@ -172,6 +172,8 @@ function App() {
     const outsideHolders = resetParticipants.filter(p => p.cabinType === 'outside')
     const lowestOutsideBid = outsideHolders.length > 0 ? Math.min(...outsideHolders.map(p => p.bid)) : outsidePrice
 
+    const newCloseTime = Date.now() + 60 * 60 * 1000
+
     setAuctionState((current) => {
       if (!current) return null
       return {
@@ -180,7 +182,11 @@ function App() {
         outsidePrice,
         insidePrice,
         lowestOutsideBid,
-        isAuctionLocked: true
+        isAuctionLocked: true,
+        config: {
+          ...current.config,
+          closeTime: newCloseTime
+        }
       }
     })
     
