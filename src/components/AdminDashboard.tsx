@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import type { AuctionState, AuctionConfig, Participant } from '@/lib/types'
 import { formatCurrency, formatTimeRemaining } from '@/lib/auction'
-import { SignOut, ArrowsClockwise, Users, Clock, PencilSimple, Key } from '@phosphor-icons/react'
+import { SignOut, ArrowsClockwise, Users, Clock, PencilSimple, Key, Trash, Plus } from '@phosphor-icons/react'
 import {
   Table,
   TableBody,
@@ -17,6 +17,17 @@ import { AdminSettings } from './AdminSettings'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface AdminDashboardProps {
   auctionState: AuctionState
@@ -34,6 +45,9 @@ export function AdminDashboard({ auctionState, onRestart, onLogout, onUpdateSett
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
   const [newAdminPassword, setNewAdminPassword] = useState('')
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [addForm, setAddForm] = useState({ name: '', phone: '', password: '' })
+  const [deleteParticipantId, setDeleteParticipantId] = useState<string | null>(null)
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000)
@@ -75,6 +89,51 @@ export function AdminDashboard({ auctionState, onRestart, onLogout, onUpdateSett
       setIsPasswordDialogOpen(false)
       setNewAdminPassword('')
     }
+  }
+
+  const handleAddParticipant = () => {
+    if (!addForm.name.trim()) {
+      toast.error('Participant name is required')
+      return
+    }
+
+    const newParticipant: Participant = {
+      id: `participant-${Date.now()}`,
+      name: addForm.name,
+      phone: addForm.phone,
+      password: addForm.password,
+      bid: 0,
+      bidTimestamp: Date.now(),
+      cabinType: 'none',
+      isLocked: false
+    }
+
+    const updatedParticipants = [...auctionState.participants, newParticipant]
+    onUpdateParticipants(updatedParticipants)
+    setIsAddDialogOpen(false)
+    setAddForm({ name: '', phone: '', password: '' })
+    toast.success('Participant added successfully')
+  }
+
+  const handleDeleteClick = (participantId: string) => {
+    const participant = auctionState.participants.find(p => p.id === participantId)
+    if (!participant) return
+
+    if (participant.cabinType !== 'none') {
+      toast.error('Cannot delete participant with assigned cabin')
+      return
+    }
+
+    setDeleteParticipantId(participantId)
+  }
+
+  const handleConfirmDelete = () => {
+    if (!deleteParticipantId) return
+
+    const updatedParticipants = auctionState.participants.filter(p => p.id !== deleteParticipantId)
+    onUpdateParticipants(updatedParticipants)
+    setDeleteParticipantId(null)
+    toast.success('Participant deleted successfully')
   }
 
   return (
@@ -236,8 +295,64 @@ export function AdminDashboard({ auctionState, onRestart, onLogout, onUpdateSett
 
         <Card>
           <CardHeader>
-            <CardTitle>All Participants</CardTitle>
-            <CardDescription>Complete bid details and cabin assignments</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>All Participants</CardTitle>
+                <CardDescription>Complete bid details and cabin assignments</CardDescription>
+              </div>
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <Plus className="mr-2" size={16} />
+                    Add Participant
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New Participant</DialogTitle>
+                    <DialogDescription>Create a new participant in the auction</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="add-name">Name *</Label>
+                      <Input
+                        id="add-name"
+                        value={addForm.name}
+                        onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
+                        placeholder="Couple name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="add-phone">Phone Number</Label>
+                      <Input
+                        id="add-phone"
+                        value={addForm.phone}
+                        onChange={(e) => setAddForm({ ...addForm, phone: e.target.value })}
+                        placeholder="Phone number"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="add-password">Password</Label>
+                      <Input
+                        id="add-password"
+                        type="text"
+                        value={addForm.password}
+                        onChange={(e) => setAddForm({ ...addForm, password: e.target.value })}
+                        placeholder="Login password"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleAddParticipant}>
+                        Add Participant
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
@@ -291,13 +406,23 @@ export function AdminDashboard({ auctionState, onRestart, onLogout, onUpdateSett
                       {new Date(participant.bidTimestamp).toLocaleTimeString()}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditClick(participant)}
-                      >
-                        <PencilSimple size={16} />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditClick(participant)}
+                        >
+                          <PencilSimple size={16} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteClick(participant.id)}
+                          disabled={participant.cabinType !== 'none'}
+                        >
+                          <Trash size={16} className={participant.cabinType !== 'none' ? 'text-muted-foreground' : 'text-destructive'} />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -352,6 +477,23 @@ export function AdminDashboard({ auctionState, onRestart, onLogout, onUpdateSett
             </div>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={deleteParticipantId !== null} onOpenChange={(open) => !open && setDeleteParticipantId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Participant</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this participant? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   )
