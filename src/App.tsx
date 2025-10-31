@@ -114,12 +114,9 @@ function App() {
   }
 
   const handleAdminLogin = (password: string) => {
-    if (!auctionState) {
-      setIsAdmin(true)
-      return
-    }
-
-    if (password === auctionState.adminPassword) {
+    const correctPassword = auctionState?.adminPassword || 'Spoelstra'
+    
+    if (password === correctPassword) {
       setIsAdmin(true)
     } else {
       toast.error('Incorrect admin password')
