@@ -14,7 +14,7 @@ interface AdminSetupProps {
 export function AdminSetup({ onStart, onBack }: AdminSetupProps) {
   const [totalCost, setTotalCost] = useState('24000')
   const [minimumSpread, setMinimumSpread] = useState('1000')
-  const [durationHours, setDurationHours] = useState('1')
+  const [durationMinutes, setDurationMinutes] = useState('60')
   const [outsideCabins, setOutsideCabins] = useState('4')
   const [insideCabins, setInsideCabins] = useState('2')
 
@@ -22,7 +22,7 @@ export function AdminSetup({ onStart, onBack }: AdminSetupProps) {
     const config: AuctionConfig = {
       totalCost: Math.round(parseFloat(totalCost)),
       minimumSpread: Math.round(parseFloat(minimumSpread)),
-      closeTime: Date.now() + parseFloat(durationHours) * 60 * 60 * 1000,
+      closeTime: Date.now() + parseFloat(durationMinutes) * 60 * 1000,
       outsideCabins: Math.round(parseFloat(outsideCabins)),
       insideCabins: Math.round(parseFloat(insideCabins))
     }
@@ -32,7 +32,7 @@ export function AdminSetup({ onStart, onBack }: AdminSetupProps) {
   const isValid = 
     parseFloat(totalCost) > 0 && 
     !isNaN(parseFloat(minimumSpread)) && 
-    parseFloat(durationHours) > 0 &&
+    parseFloat(durationMinutes) > 0 &&
     parseFloat(outsideCabins) >= 1 &&
     parseFloat(insideCabins) >= 1
 
@@ -123,14 +123,14 @@ export function AdminSetup({ onStart, onBack }: AdminSetupProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="duration">Initial Auction Duration (hours)</Label>
+              <Label htmlFor="duration">Initial Auction Duration (minutes)</Label>
               <Input
                 id="duration"
                 type="number"
-                value={durationHours}
-                onChange={(e) => setDurationHours(e.target.value)}
-                placeholder="24"
-                min="0.1"
+                value={durationMinutes}
+                onChange={(e) => setDurationMinutes(e.target.value)}
+                placeholder="60"
+                min="1"
                 step="1"
               />
               <p className="text-xs text-muted-foreground">
