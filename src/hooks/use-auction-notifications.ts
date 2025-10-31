@@ -34,7 +34,9 @@ export function useAuctionNotifications(
 
     const currentPrice = participant.cabinType === 'outside' 
       ? auctionState.outsidePrice 
-      : auctionState.insidePrice
+      : participant.cabinType === 'inside'
+      ? auctionState.insidePrice
+      : 0
 
     const currentState: NotificationState = {
       cabinType: participant.cabinType,
@@ -47,9 +49,13 @@ export function useAuctionNotifications(
 
       if (prev.cabinType !== currentState.cabinType) {
         const wasOutside = prev.cabinType === 'outside'
+        const wasInside = prev.cabinType === 'inside'
+        const wasNone = prev.cabinType === 'none'
         const isNowOutside = currentState.cabinType === 'outside'
+        const isNowInside = currentState.cabinType === 'inside'
+        const isNowNone = currentState.cabinType === 'none'
 
-        if (wasOutside && !isNowOutside) {
+        if (wasOutside && isNowInside) {
           toast.error('⚠️ Cabin Change: You\'ve been moved to an INSIDE cabin', {
             description: `Someone outbid you. Your new price: $${currentPrice.toLocaleString()}`,
             duration: 10000
@@ -59,7 +65,17 @@ export function useAuctionNotifications(
             '⚠️ Cabin Assignment Changed',
             `You've been moved to an INSIDE cabin. New price: $${currentPrice.toLocaleString()}`
           )
-        } else if (!wasOutside && isNowOutside) {
+        } else if (wasOutside && isNowNone) {
+          toast.error('❌ Cabin Lost: You no longer have a cabin', {
+            description: `Multiple participants outbid you. Increase your bid to secure a cabin.`,
+            duration: 10000
+          })
+          
+          sendBrowserNotification(
+            '❌ Cabin Lost',
+            `You no longer have a cabin. Increase your bid to secure one.`
+          )
+        } else if (wasInside && isNowOutside) {
           toast.success('🎉 Cabin Upgrade: You now have an OUTSIDE cabin!', {
             description: `Your new price: $${currentPrice.toLocaleString()}`,
             duration: 10000
@@ -69,8 +85,38 @@ export function useAuctionNotifications(
             '🎉 Cabin Upgraded!',
             `You now have an OUTSIDE cabin. New price: $${currentPrice.toLocaleString()}`
           )
+        } else if (wasInside && isNowNone) {
+          toast.error('❌ Cabin Lost: You no longer have a cabin', {
+            description: `Participants outbid you. Increase your bid to secure a cabin.`,
+            duration: 10000
+          })
+          
+          sendBrowserNotification(
+            '❌ Cabin Lost',
+            `You no longer have a cabin. Increase your bid to secure one.`
+          )
+        } else if (wasNone && isNowInside) {
+          toast.success('🎉 Cabin Secured: You now have an INSIDE cabin!', {
+            description: `Your price: $${currentPrice.toLocaleString()}`,
+            duration: 10000
+          })
+          
+          sendBrowserNotification(
+            '🎉 Cabin Secured!',
+            `You now have an INSIDE cabin. Price: $${currentPrice.toLocaleString()}`
+          )
+        } else if (wasNone && isNowOutside) {
+          toast.success('🎉 Cabin Secured: You now have an OUTSIDE cabin!', {
+            description: `Your price: $${currentPrice.toLocaleString()}`,
+            duration: 10000
+          })
+          
+          sendBrowserNotification(
+            '🎉 Cabin Secured!',
+            `You now have an OUTSIDE cabin. Price: $${currentPrice.toLocaleString()}`
+          )
         }
-      } else if (prev.price !== currentState.price) {
+      } else if (prev.price !== currentState.price && participant.cabinType !== 'none') {
         const priceDiff = currentState.price - prev.price
         const isIncrease = priceDiff > 0
 

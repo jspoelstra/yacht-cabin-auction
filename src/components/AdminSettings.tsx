@@ -25,11 +25,15 @@ export function AdminSettings({ config, onUpdateSettings }: AdminSettingsProps) 
   const [totalCost, setTotalCost] = useState(config.totalCost.toString())
   const [minimumSpread, setMinimumSpread] = useState(config.minimumSpread.toString())
   const [minutesUntilClose, setMinutesUntilClose] = useState('')
+  const [outsideCabins, setOutsideCabins] = useState(config.outsideCabins.toString())
+  const [insideCabins, setInsideCabins] = useState(config.insideCabins.toString())
 
   const handleSave = () => {
     const parsedTotalCost = Math.round(parseFloat(totalCost))
     const parsedMinSpread = Math.round(parseFloat(minimumSpread))
     const parsedMinutes = minutesUntilClose ? parseFloat(minutesUntilClose) : null
+    const parsedOutsideCabins = Math.round(parseFloat(outsideCabins))
+    const parsedInsideCabins = Math.round(parseFloat(insideCabins))
 
     if (isNaN(parsedTotalCost) || parsedTotalCost <= 0) {
       toast.error('Total cost must be a positive number')
@@ -46,6 +50,16 @@ export function AdminSettings({ config, onUpdateSettings }: AdminSettingsProps) 
       return
     }
 
+    if (parsedOutsideCabins < 1) {
+      toast.error('Must have at least 1 outside cabin')
+      return
+    }
+
+    if (parsedInsideCabins < 1) {
+      toast.error('Must have at least 1 inside cabin')
+      return
+    }
+
     const newCloseTime = parsedMinutes !== null 
       ? Date.now() + parsedMinutes * 60 * 1000
       : config.closeTime
@@ -54,6 +68,8 @@ export function AdminSettings({ config, onUpdateSettings }: AdminSettingsProps) 
       totalCost: parsedTotalCost,
       minimumSpread: parsedMinSpread,
       closeTime: newCloseTime,
+      outsideCabins: parsedOutsideCabins,
+      insideCabins: parsedInsideCabins
     }
 
     onUpdateSettings(newConfig)
@@ -67,6 +83,8 @@ export function AdminSettings({ config, onUpdateSettings }: AdminSettingsProps) 
       setTotalCost(config.totalCost.toString())
       setMinimumSpread(config.minimumSpread.toString())
       setMinutesUntilClose('')
+      setOutsideCabins(config.outsideCabins.toString())
+      setInsideCabins(config.insideCabins.toString())
     }
   }
 
@@ -86,6 +104,38 @@ export function AdminSettings({ config, onUpdateSettings }: AdminSettingsProps) 
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="outside-cabins">Outside Cabins</Label>
+              <Input
+                id="outside-cabins"
+                type="number"
+                step="1"
+                min="1"
+                value={outsideCabins}
+                onChange={(e) => setOutsideCabins(e.target.value)}
+                placeholder="4"
+              />
+              <p className="text-xs text-muted-foreground">
+                Minimum 1 outside cabin
+              </p>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="inside-cabins">Inside Cabins</Label>
+              <Input
+                id="inside-cabins"
+                type="number"
+                step="1"
+                min="1"
+                value={insideCabins}
+                onChange={(e) => setInsideCabins(e.target.value)}
+                placeholder="2"
+              />
+              <p className="text-xs text-muted-foreground">
+                Minimum 1 inside cabin
+              </p>
+            </div>
+          </div>
           <div className="grid gap-2">
             <Label htmlFor="total-cost">Total Cost ($)</Label>
             <Input
@@ -97,7 +147,7 @@ export function AdminSettings({ config, onUpdateSettings }: AdminSettingsProps) 
               placeholder="Enter total cost"
             />
             <p className="text-xs text-muted-foreground">
-              The total cost to be divided among all 6 cabins (integer dollars)
+              The total cost to be divided among all cabins (integer dollars)
             </p>
           </div>
           <div className="grid gap-2">

@@ -15,12 +15,16 @@ export function AdminSetup({ onStart, onBack }: AdminSetupProps) {
   const [totalCost, setTotalCost] = useState('24000')
   const [minimumSpread, setMinimumSpread] = useState('1000')
   const [durationHours, setDurationHours] = useState('24')
+  const [outsideCabins, setOutsideCabins] = useState('4')
+  const [insideCabins, setInsideCabins] = useState('2')
 
   const handleStart = () => {
     const config: AuctionConfig = {
       totalCost: Math.round(parseFloat(totalCost)),
       minimumSpread: Math.round(parseFloat(minimumSpread)),
-      closeTime: Date.now() + parseFloat(durationHours) * 60 * 60 * 1000
+      closeTime: Date.now() + parseFloat(durationHours) * 60 * 60 * 1000,
+      outsideCabins: Math.round(parseFloat(outsideCabins)),
+      insideCabins: Math.round(parseFloat(insideCabins))
     }
     onStart(config)
   }
@@ -28,7 +32,9 @@ export function AdminSetup({ onStart, onBack }: AdminSetupProps) {
   const isValid = 
     parseFloat(totalCost) > 0 && 
     !isNaN(parseFloat(minimumSpread)) && 
-    parseFloat(durationHours) > 0
+    parseFloat(durationHours) > 0 &&
+    parseFloat(outsideCabins) >= 1 &&
+    parseFloat(insideCabins) >= 1
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -51,6 +57,40 @@ export function AdminSetup({ onStart, onBack }: AdminSetupProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="outside-cabins">Outside Cabins</Label>
+                <Input
+                  id="outside-cabins"
+                  type="number"
+                  value={outsideCabins}
+                  onChange={(e) => setOutsideCabins(e.target.value)}
+                  placeholder="4"
+                  min="1"
+                  step="1"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Minimum 1 outside cabin
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="inside-cabins">Inside Cabins</Label>
+                <Input
+                  id="inside-cabins"
+                  type="number"
+                  value={insideCabins}
+                  onChange={(e) => setInsideCabins(e.target.value)}
+                  placeholder="2"
+                  min="1"
+                  step="1"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Minimum 1 inside cabin
+                </p>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="total-cost">Total Charter Cost ($)</Label>
               <Input
@@ -63,7 +103,7 @@ export function AdminSetup({ onStart, onBack }: AdminSetupProps) {
                 step="1"
               />
               <p className="text-xs text-muted-foreground">
-                Fixed total cost to be divided among 6 cabins (integer dollars)
+                Fixed total cost to be divided among all cabins (integer dollars)
               </p>
             </div>
 

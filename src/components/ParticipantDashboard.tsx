@@ -53,7 +53,9 @@ export function ParticipantDashboard({
   const isClosed = auctionState.status === 'closed'
   const myPrice = participant.cabinType === 'outside' 
     ? auctionState.outsidePrice 
-    : auctionState.insidePrice
+    : participant.cabinType === 'inside'
+    ? auctionState.insidePrice
+    : 0
 
   const isAtRisk = participant.cabinType === 'outside' && 
     participant.bid <= auctionState.lowestOutsideBid &&
@@ -111,15 +113,20 @@ export function ParticipantDashboard({
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className={participant.cabinType === 'outside' ? 'border-accent shadow-accent/20' : ''}>
+          <Card className={participant.cabinType === 'outside' ? 'border-accent shadow-accent/20' : participant.cabinType === 'none' ? 'border-destructive/50' : ''}>
             <CardHeader>
               <CardDescription>Your Cabin Assignment</CardDescription>
               <CardTitle className="text-3xl flex items-center gap-2">
                 <Badge 
-                  variant={participant.cabinType === 'outside' ? 'default' : 'secondary'}
+                  variant={participant.cabinType === 'outside' ? 'default' : participant.cabinType === 'inside' ? 'secondary' : 'outline'}
                   className="text-lg px-4 py-2"
                 >
-                  {participant.cabinType === 'outside' ? '☀️ Outside Cabin' : '🌙 Inside Cabin'}
+                  {participant.cabinType === 'outside' 
+                    ? '☀️ Outside Cabin' 
+                    : participant.cabinType === 'inside'
+                    ? '🌙 Inside Cabin'
+                    : '❌ No Cabin'
+                  }
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -129,6 +136,11 @@ export function ParticipantDashboard({
                   <span className="text-muted-foreground">Your price:</span>
                   <span className="font-bold text-xl">{formatCurrency(myPrice)}</span>
                 </div>
+                {participant.cabinType === 'none' && (
+                  <p className="text-xs text-destructive mt-2">
+                    Increase your bid to secure a cabin
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -162,7 +174,7 @@ export function ParticipantDashboard({
               <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium text-muted-foreground">Outside Cabin Price</span>
-                  <Badge variant="outline" className="text-xs">4 available</Badge>
+                  <Badge variant="outline" className="text-xs">{auctionState.config.outsideCabins} available</Badge>
                 </div>
                 <p className="text-2xl font-bold text-accent">{formatCurrency(auctionState.outsidePrice)}</p>
               </div>
@@ -170,7 +182,7 @@ export function ParticipantDashboard({
               <div className="p-4 rounded-lg bg-muted">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium text-muted-foreground">Inside Cabin Price</span>
-                  <Badge variant="outline" className="text-xs">2 available</Badge>
+                  <Badge variant="outline" className="text-xs">{auctionState.config.insideCabins} available</Badge>
                 </div>
                 <p className="text-2xl font-bold">{formatCurrency(auctionState.insidePrice)}</p>
               </div>

@@ -218,16 +218,16 @@ export function AdminDashboard({ auctionState, onRestart, onLogout, onUpdateSett
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Outside Cabins</span>
-                <span className="font-medium">4</span>
+                <span className="font-medium">{auctionState.config.outsideCabins}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Inside Cabins</span>
-                <span className="font-medium">2</span>
+                <span className="font-medium">{auctionState.config.insideCabins}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Total Revenue</span>
                 <span className="font-medium">
-                  {formatCurrency(auctionState.outsidePrice * 4 + auctionState.insidePrice * 2)}
+                  {formatCurrency(auctionState.outsidePrice * auctionState.config.outsideCabins + auctionState.insidePrice * auctionState.config.insideCabins)}
                 </span>
               </div>
             </CardContent>
@@ -264,12 +264,21 @@ export function AdminDashboard({ auctionState, onRestart, onLogout, onUpdateSett
                     <TableCell className="text-sm text-muted-foreground">{participant.password || '—'}</TableCell>
                     <TableCell>{formatCurrency(participant.bid)}</TableCell>
                     <TableCell>
-                      <Badge variant={participant.cabinType === 'outside' ? 'default' : 'secondary'}>
+                      <Badge variant={
+                        participant.cabinType === 'outside' ? 'default' : 
+                        participant.cabinType === 'inside' ? 'secondary' : 
+                        'outline'
+                      }>
                         {participant.cabinType}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-semibold">
-                      {formatCurrency(participant.cabinType === 'outside' ? auctionState.outsidePrice : auctionState.insidePrice)}
+                      {participant.cabinType === 'outside' 
+                        ? formatCurrency(auctionState.outsidePrice)
+                        : participant.cabinType === 'inside'
+                        ? formatCurrency(auctionState.insidePrice)
+                        : formatCurrency(0)
+                      }
                     </TableCell>
                     <TableCell>
                       {participant.isLocked ? (

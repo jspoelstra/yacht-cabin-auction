@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import type { AuctionState, AuctionConfig, Participant } from './lib/types'
-import { initializeParticipants, calculateInitialPrices, processBid, shouldExtendAuction, recalculatePrices } from './lib/auction'
+import { initializeParticipants, calculateInitialPrices, processBid, shouldExtendAuction, recalculatePrices, generateParticipantNames } from './lib/auction'
 import { AdminSetup } from './components/AdminSetup'
 import { AdminDashboard } from './components/AdminDashboard'
 import { ParticipantLogin } from './components/ParticipantLogin'
@@ -129,11 +129,56 @@ function App() {
     setAuctionState((current) => {
       if (!current) return null
 
-      const prices = recalculatePrices(current.participants, newConfig)
+      const oldTotalParticipants = current.config.outsideCabins + current.config.insideCabins
+      const newTotalParticipants = newConfig.outsideCabins + newConfig.insideCabins
+      let updatedParticipants = [...current.participants]
+
+      if (newTotalParticipants > oldTotalParticipants) {
+        const additionalCount = newTotalParticipants - oldTotalParticipants
+        const names = generateParticipantNames(newTotalParticipants)
+        const { outsidePrice, insidePrice } = calculateInitialPrices(newConfig)
+        
+        for (let i = 0; i < additionalCount; i++) {
+          const newId = `participant-${updatedParticipants.length}`
+          const newIndex = updatedParticipants.length
+          updatedParticipants.push({
+            id: newId,
+            name: names[newIndex],
+            phone: '',
+            password: '',
+            bid: 0,
+            bidTimestamp: Date.now(),
+            cabinType: 'none',
+            isLocked: false
+          })
+        }
+      }
+
+      const sorted = [...updatedParticipants].sort((a, b) => {
+        if (b.bid !== a.bid) return b.bid - a.bid
+        return a.bidTimestamp - b.bidTimestamp
+      })
+
+      const outsideHolders = sorted.slice(0, newConfig.outsideCabins)
+      const insideHolders = sorted.slice(newConfig.outsideCabins, newConfig.outsideCabins + newConfig.insideCabins)
+      const noCabinHolders = sorted.slice(newConfig.outsideCabins + newConfig.insideCabins)
+
+      const finalParticipants = updatedParticipants.map(p => {
+        if (outsideHolders.find(oh => oh.id === p.id)) {
+          return { ...p, cabinType: 'outside' as const }
+        } else if (insideHolders.find(ih => ih.id === p.id)) {
+          return { ...p, cabinType: 'inside' as const }
+        } else {
+          return { ...p, cabinType: 'none' as const }
+        }
+      })
+
+      const prices = recalculatePrices(finalParticipants, newConfig)
 
       return {
         ...current,
         config: newConfig,
+        participants: finalParticipants,
         outsidePrice: prices.outsidePrice,
         insidePrice: prices.insidePrice,
         lowestOutsideBid: prices.lowestOutsideBid

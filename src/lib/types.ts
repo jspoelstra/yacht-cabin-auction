@@ -1,4 +1,4 @@
-export type CabinType = 'outside' | 'inside'
+export type CabinType = 'outside' | 'inside' | 'none'
 
 export interface Participant {
   id: string
@@ -15,6 +15,8 @@ export interface AuctionConfig {
   totalCost: number
   minimumSpread: number
   closeTime: number
+  outsideCabins: number
+  insideCabins: number
 }
 
 export interface AuctionState {

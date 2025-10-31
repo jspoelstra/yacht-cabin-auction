@@ -1,14 +1,14 @@
 import type { Participant, AuctionConfig } from './types'
 
-export function generateParticipantNames(): string[] {
-  return [
-    'Couple A',
-    'Couple B',
-    'Couple C',
-    'Couple D',
-    'Couple E',
-    'Couple F'
-  ]
+export function generateParticipantNames(count: number): string[] {
+  const names: string[] = []
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  
+  for (let i = 0; i < count; i++) {
+    names.push(`Couple ${letters[i % 26]}${i >= 26 ? Math.floor(i / 26) : ''}`)
+  }
+  
+  return names
 }
 
 export function shuffleArray<T>(array: T[]): T[] {
@@ -24,18 +24,21 @@ export function calculateInitialPrices(config: AuctionConfig): {
   outsidePrice: number
   insidePrice: number
 } {
-  const { totalCost, minimumSpread } = config
-  const outsidePrice = Math.round((totalCost + 2 * minimumSpread) / 6)
+  const { totalCost, minimumSpread, outsideCabins, insideCabins } = config
+  const outsidePrice = Math.round((totalCost + insideCabins * minimumSpread) / (outsideCabins + insideCabins))
   const insidePrice = Math.round(outsidePrice - minimumSpread)
   
   return { outsidePrice, insidePrice }
 }
 
 export function initializeParticipants(config: AuctionConfig): Participant[] {
-  const names = generateParticipantNames()
+  const { outsideCabins, insideCabins } = config
+  const totalParticipants = outsideCabins + insideCabins
+  const names = generateParticipantNames(totalParticipants)
+  
   const cabinAssignments: ('outside' | 'inside')[] = [
-    'outside', 'outside', 'outside', 'outside',
-    'inside', 'inside'
+    ...Array(outsideCabins).fill('outside'),
+    ...Array(insideCabins).fill('inside')
   ]
   
   const shuffledCabins = shuffleArray(cabinAssignments)
@@ -66,6 +69,7 @@ export function processBid(
 } {
   const now = Date.now()
   const roundedBidAmount = Math.round(bidAmount)
+  const { outsideCabins, insideCabins } = config
   
   const updatedParticipants = participants.map(p => ({
     ...p,
@@ -79,18 +83,24 @@ export function processBid(
     return a.bidTimestamp - b.bidTimestamp
   })
   
-  const outsideHolders = sorted.slice(0, 4)
-  const insideHolders = sorted.slice(4, 6)
+  const outsideHolders = sorted.slice(0, outsideCabins)
+  const insideHolders = sorted.slice(outsideCabins, outsideCabins + insideCabins)
+  const noCabinHolders = sorted.slice(outsideCabins + insideCabins)
   
-  const lowestOutsideBid = Math.min(...outsideHolders.map(p => p.bid))
-  const oFloor = Math.round((config.totalCost + 2 * config.minimumSpread) / 6)
+  const lowestOutsideBid = outsideHolders.length > 0 ? Math.min(...outsideHolders.map(p => p.bid)) : 0
+  const oFloor = Math.round((config.totalCost + insideCabins * config.minimumSpread) / (outsideCabins + insideCabins))
   const outsidePrice = Math.max(lowestOutsideBid, oFloor)
-  const insidePrice = Math.round((config.totalCost - 4 * outsidePrice) / 2)
+  const insidePrice = Math.round((config.totalCost - outsideCabins * outsidePrice) / insideCabins)
   
-  const finalParticipants = updatedParticipants.map(p => ({
-    ...p,
-    cabinType: outsideHolders.find(oh => oh.id === p.id) ? 'outside' as const : 'inside' as const
-  }))
+  const finalParticipants = updatedParticipants.map(p => {
+    if (outsideHolders.find(oh => oh.id === p.id)) {
+      return { ...p, cabinType: 'outside' as const }
+    } else if (insideHolders.find(ih => ih.id === p.id)) {
+      return { ...p, cabinType: 'inside' as const }
+    } else {
+      return { ...p, cabinType: 'none' as const }
+    }
+  })
   
   return {
     participants: finalParticipants,
@@ -146,17 +156,19 @@ export function recalculatePrices(
   insidePrice: number
   lowestOutsideBid: number
 } {
+  const { outsideCabins, insideCabins } = config
+  
   const sorted = [...participants].sort((a, b) => {
     if (b.bid !== a.bid) return b.bid - a.bid
     return a.bidTimestamp - b.bidTimestamp
   })
   
-  const outsideHolders = sorted.slice(0, 4)
+  const outsideHolders = sorted.slice(0, outsideCabins)
   
-  const lowestOutsideBid = Math.min(...outsideHolders.map(p => p.bid))
-  const oFloor = Math.round((config.totalCost + 2 * config.minimumSpread) / 6)
+  const lowestOutsideBid = outsideHolders.length > 0 ? Math.min(...outsideHolders.map(p => p.bid)) : 0
+  const oFloor = Math.round((config.totalCost + insideCabins * config.minimumSpread) / (outsideCabins + insideCabins))
   const outsidePrice = Math.max(lowestOutsideBid, oFloor)
-  const insidePrice = Math.round((config.totalCost - 4 * outsidePrice) / 2)
+  const insidePrice = Math.round((config.totalCost - outsideCabins * outsidePrice) / insideCabins)
   
   return {
     outsidePrice,
