@@ -14,7 +14,7 @@ interface AdminSetupProps {
 export function AdminSetup({ onStart, onBack }: AdminSetupProps) {
   const [totalCost, setTotalCost] = useState('24000')
   const [minimumSpread, setMinimumSpread] = useState('1000')
-  const [durationHours, setDurationHours] = useState('24')
+  const [durationHours, setDurationHours] = useState('1')
   const [outsideCabins, setOutsideCabins] = useState('4')
   const [insideCabins, setInsideCabins] = useState('2')
 

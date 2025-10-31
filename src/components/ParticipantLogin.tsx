@@ -69,7 +69,7 @@ export function ParticipantLogin({ participants, onLogin, onAdminLogin, adminPas
             <CardHeader>
               <CardTitle>Participant Login</CardTitle>
               <CardDescription>
-                {participants ? 'Select your name and enter your password' : 'The auction has not started yet'}
+                {participants ? 'Select your name and enter your password' : 'The auction has not started yet. Please check back later or contact the administrator.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
