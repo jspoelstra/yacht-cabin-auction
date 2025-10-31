@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import type { Participant, AuctionState } from '@/lib/types'
 import { formatCurrency, formatTimeRemaining } from '@/lib/auction'
 import { SignOut, Lock, LockOpen, Anchor, Clock, TrendUp } from '@phosphor-icons/react'
+import { useAuctionNotifications } from '@/hooks/use-auction-notifications'
 
 interface ParticipantDashboardProps {
   participant: Participant
@@ -24,11 +25,23 @@ export function ParticipantDashboard({
 }: ParticipantDashboardProps) {
   const [bidAmount, setBidAmount] = useState(participant.bid.toString())
   const [now, setNow] = useState(Date.now())
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+    'Notification' in window ? Notification.permission : 'denied'
+  )
+
+  useAuctionNotifications(participant, auctionState)
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(interval)
   }, [])
+
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission()
+      setNotificationPermission(permission)
+    }
+  }
 
   const handleSubmit = () => {
     const amount = Math.round(parseFloat(bidAmount))
@@ -77,6 +90,22 @@ export function ParticipantDashboard({
           <Alert variant="destructive">
             <AlertDescription>
               ⚠️ You are at risk! Your bid is the lowest among outside cabin holders. Higher bids may bump you to an inside cabin.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {!isClosed && notificationPermission !== 'granted' && (
+          <Alert className="border-accent bg-accent/5">
+            <AlertDescription className="flex items-center justify-between">
+              <span>🔔 Enable browser notifications to get instant alerts when prices change</span>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={requestNotificationPermission}
+                className="ml-4"
+              >
+                Enable Notifications
+              </Button>
             </AlertDescription>
           </Alert>
         )}
