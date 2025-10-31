@@ -25,8 +25,8 @@ export function AdminSettings({ config, onUpdateSettings }: AdminSettingsProps) 
   const [totalCost, setTotalCost] = useState(config.totalCost.toString())
   const [minimumSpread, setMinimumSpread] = useState(config.minimumSpread.toString())
   const [minutesUntilClose, setMinutesUntilClose] = useState('')
-  const [outsideCabins, setOutsideCabins] = useState(config.outsideCabins.toString())
-  const [insideCabins, setInsideCabins] = useState(config.insideCabins.toString())
+  const [outsideCabins, setOutsideCabins] = useState((config.outsideCabins ?? 4).toString())
+  const [insideCabins, setInsideCabins] = useState((config.insideCabins ?? 2).toString())
 
   const handleSave = () => {
     const parsedTotalCost = Math.round(parseFloat(totalCost))
@@ -83,8 +83,8 @@ export function AdminSettings({ config, onUpdateSettings }: AdminSettingsProps) 
       setTotalCost(config.totalCost.toString())
       setMinimumSpread(config.minimumSpread.toString())
       setMinutesUntilClose('')
-      setOutsideCabins(config.outsideCabins.toString())
-      setInsideCabins(config.insideCabins.toString())
+      setOutsideCabins((config.outsideCabins ?? 4).toString())
+      setInsideCabins((config.insideCabins ?? 2).toString())
     }
   }
 

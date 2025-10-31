@@ -218,16 +218,16 @@ export function AdminDashboard({ auctionState, onRestart, onLogout, onUpdateSett
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Outside Cabins</span>
-                <span className="font-medium">{auctionState.config.outsideCabins}</span>
+                <span className="font-medium">{auctionState.config.outsideCabins ?? 4}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Inside Cabins</span>
-                <span className="font-medium">{auctionState.config.insideCabins}</span>
+                <span className="font-medium">{auctionState.config.insideCabins ?? 2}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Total Revenue</span>
                 <span className="font-medium">
-                  {formatCurrency(auctionState.outsidePrice * auctionState.config.outsideCabins + auctionState.insidePrice * auctionState.config.insideCabins)}
+                  {formatCurrency(auctionState.outsidePrice * (auctionState.config.outsideCabins ?? 4) + auctionState.insidePrice * (auctionState.config.insideCabins ?? 2))}
                 </span>
               </div>
             </CardContent>

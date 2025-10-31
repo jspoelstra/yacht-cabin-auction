@@ -15,6 +15,25 @@ function App() {
   const [lastBidTimestamp, setLastBidTimestamp] = useState(0)
 
   useEffect(() => {
+    if (auctionState && (!auctionState.config.outsideCabins || !auctionState.config.insideCabins)) {
+      const outsideCount = auctionState.participants.filter(p => p.cabinType === 'outside').length
+      const insideCount = auctionState.participants.filter(p => p.cabinType === 'inside').length
+      
+      setAuctionState((current) => {
+        if (!current) return null
+        return {
+          ...current,
+          config: {
+            ...current.config,
+            outsideCabins: outsideCount > 0 ? outsideCount : 4,
+            insideCabins: insideCount > 0 ? insideCount : 2
+          }
+        }
+      })
+    }
+  }, [])
+
+  useEffect(() => {
     if (!auctionState || auctionState.status !== 'active') return
 
     const interval = setInterval(() => {
