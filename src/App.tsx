@@ -182,6 +182,7 @@ function App() {
         outsidePrice,
         insidePrice,
         lowestOutsideBid,
+        status: 'active',
         isAuctionLocked: true,
         config: {
           ...current.config,
