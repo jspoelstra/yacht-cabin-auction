@@ -53,6 +53,24 @@ function App() {
     return () => clearInterval(interval)
   }, [auctionState, lastBidTimestamp, setAuctionState])
 
+  useEffect(() => {
+    if (!auctionState || !currentParticipantId) return
+    
+    const participant = auctionState.participants.find(p => p.id === currentParticipantId)
+    if (!participant) {
+      setCurrentParticipantId(null)
+    }
+  }, [auctionState, currentParticipantId])
+
+  useEffect(() => {
+    if (!auctionState || !currentParticipantId) return
+    
+    const participant = auctionState.participants.find(p => p.id === currentParticipantId)
+    if (!participant) {
+      setCurrentParticipantId(null)
+    }
+  }, [auctionState, currentParticipantId])
+
   const handleStartAuction = (config: AuctionConfig) => {
     const participants = initializeParticipants(config)
     const { outsidePrice, insidePrice } = calculateInitialPrices(config)
@@ -284,8 +302,8 @@ function App() {
   }
 
   const participant = auctionState.participants.find(p => p.id === currentParticipantId)
+
   if (!participant) {
-    setCurrentParticipantId(null)
     return null
   }
 
