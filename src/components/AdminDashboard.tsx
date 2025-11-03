@@ -398,8 +398,13 @@ export function AdminDashboard({ auctionState, onToggleLock, onReset, onClear, o
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
+            {sortedParticipants.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="mb-4">No participants yet. Click "Add Participant" to add participants to the auction.</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
                 <TableRow>
                   <TableHead>Rank</TableHead>
                   <TableHead>Participant</TableHead>
@@ -470,7 +475,8 @@ export function AdminDashboard({ auctionState, onToggleLock, onReset, onClear, o
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+              </Table>
+            )}
           </CardContent>
         </Card>
 

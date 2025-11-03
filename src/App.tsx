@@ -31,6 +31,27 @@ function App() {
         }
       })
     }
+
+    // Migration: If we have an auction state but no participants, reinitialize them
+    if (auctionState && (!auctionState.participants || auctionState.participants.length === 0)) {
+      console.log('Migrating auction state: reinitializing participants')
+      const config = auctionState.config
+      const participants = initializeParticipants(config)
+      const { outsidePrice, insidePrice } = calculateInitialPrices(config)
+      const outsideHolders = participants.filter(p => p.cabinType === 'outside')
+      const lowestOutsideBid = outsideHolders.length > 0 ? Math.min(...outsideHolders.map(p => p.bid)) : outsidePrice
+
+      setAuctionState((current) => {
+        if (!current) return null
+        return {
+          ...current,
+          participants,
+          outsidePrice,
+          insidePrice,
+          lowestOutsideBid
+        }
+      })
+    }
   }, [])
 
   useEffect(() => {
