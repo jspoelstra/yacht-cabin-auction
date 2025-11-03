@@ -10,6 +10,35 @@ A live auction system for allocating yacht cabins among cruise participants usin
 **Complexity Level**: Light Application (multiple features with basic state)
 This is a real-time auction system with role-based access, persistent state management, and automated pricing algorithms. It requires coordination between multiple users but doesn't involve complex external integrations.
 
+## Deployment Architecture
+
+### Containerization
+The application will be packaged as a Docker container to ensure consistent deployment across environments. This enables:
+- **Portability** - Run the same container locally, in testing, and in production
+- **Isolation** - Self-contained environment with all dependencies
+- **Scalability** - Easy deployment to Azure Container Services
+
+### Azure Container Services Deployment
+The application will be deployed to Azure Container Apps (or Azure Container Instances), providing:
+- **Managed container hosting** - Azure handles infrastructure and scaling
+- **HTTPS endpoints** - Secure access for all participants
+- **Container restart resilience** - Automatic recovery from failures
+- **Environment configuration** - Secure management of admin credentials and settings
+
+### State Management
+For initial deployment, the application uses in-memory state or a local KV store within the container:
+- **Acceptable trade-off** - State loss on container restart is acceptable for this use case (auction can be reset)
+- **Simplicity** - No external database dependencies reduces complexity
+- **Performance** - In-memory operations provide fastest response times for real-time updates
+- **Future considerations** - Could migrate to persistent storage (Azure Redis, Cosmos DB) if requirements change
+
+### Real-time Synchronization
+Multiple participants must see live updates simultaneously:
+- **Technology** - WebSockets or Server-Sent Events (SSE) for push-based updates
+- **Broadcast mechanism** - When any participant submits a bid, all connected clients receive updated auction state
+- **Connection management** - Handle client disconnections and reconnections gracefully
+- **State consistency** - All participants see the same auction state in real-time
+
 ## Essential Features
 
 ### Admin Setup
@@ -87,6 +116,12 @@ This is a real-time auction system with role-based access, persistent state mana
 - **Insufficient bids** - Handle cases where not enough participants bid to fill all cabins
 - **Auction close with locked user** - Allow auction to close even if a participant is locked
 - **Network interruptions** - State is persisted, user can reload and continue
+- **Container restart/crash** - Accept state loss; admin can reinitialize auction from setup screen
+- **WebSocket disconnection** - Client automatically attempts to reconnect and fetches latest state
+- **Multiple simultaneous connections** - Each participant can have multiple browser tabs open; all receive updates
+- **Long-running connections** - Handle WebSocket timeout and keepalive to maintain connections during inactive periods
+- **Container scaling** - Single container instance required due to in-memory state (no horizontal scaling)
+- **Port conflicts** - Container exposes configurable port for Azure Container Services mapping
 
 ## Design Direction
 
