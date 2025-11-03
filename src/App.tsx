@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useSharedKV } from './hooks/use-shared-kv'
 import type { AuctionState, AuctionConfig, Participant } from './lib/types'
 import { initializeParticipants, calculateInitialPrices, processBid, shouldExtendAuction, recalculatePrices, generateParticipantNames, shuffleArray } from './lib/auction'
 import { AdminSetup } from './components/AdminSetup'
@@ -9,7 +9,7 @@ import { ParticipantDashboard } from './components/ParticipantDashboard'
 import { Toaster, toast } from 'sonner'
 
 function App() {
-  const [auctionState, setAuctionState] = useKV<AuctionState | null>('auction-state', null)
+  const [auctionState, setAuctionState] = useSharedKV<AuctionState | null>('auction-state', null)
   const [currentParticipantId, setCurrentParticipantId] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [lastBidTimestamp, setLastBidTimestamp] = useState(0)

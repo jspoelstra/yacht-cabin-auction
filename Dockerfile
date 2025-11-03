@@ -25,14 +25,17 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install only production dependencies
+# Install only production dependencies (including express and ws)
 RUN npm ci --only=production
+
+# Install server dependencies
+RUN npm install express ws
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 
-# Install serve to run the production build
-RUN npm install -g serve
+# Copy server file
+COPY server.js ./
 
 # Expose port (configurable via environment variable)
 EXPOSE 5000
@@ -43,7 +46,7 @@ ENV NODE_ENV=production
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:5000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+  CMD node -e "require('http').get('http://localhost:5000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Start the application
-CMD ["sh", "-c", "serve -s dist -l ${PORT}"]
+CMD ["node", "server.js"]
